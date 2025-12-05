@@ -394,9 +394,9 @@ plt.text(x3 + 3, mid_y, f'{n1_matsumoto_avg:.2f} µV', va='center', fontsize=9, 
 # ---------------------------- N2 amplitude line --------------------------------
 
 # Horizontal line at P2 (min of section 3) from P2 time to the x position of section4 max
-x_start = t[min_idx_section3]
-x_end = t[max_idx_section4]
-y_h = min_value_section3
+x_start = t[max_idx_section2]
+x_end = t[min_idx_section3]
+y_h = max_value_section2
 
 # Draw the horizontal line (no legend entry)
 plt.hlines(y=y_h, xmin=x_start, xmax=x_end, colors='red', linestyles='--', linewidth=2, zorder=4)
@@ -412,7 +412,8 @@ plt.text(x_mid, y_text, f'{n2_amp_avg:.2f} µV', color='red',
 
 # If you want a connecting vertical line from the horizontal end to the section4 max point:
 # this draws a vertical line at x_end from y_h up to the section4 max value (max_value_section4)
-plt.vlines(x_end, ymin=y_h, ymax=max_value_section4, colors='red', linestyles=':', linewidth=1, alpha=0.8, zorder=3)
+plt.vlines(x_end, ymin=y_h, ymax=min_value_section3, colors='red', linestyles=':', linewidth=1, alpha=0.8, zorder=3)
+
 
 # ------------------------------------------------------------------------------
 

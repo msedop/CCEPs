@@ -8,8 +8,6 @@ FOR EVERY PATIENT AND CHANNEL, CHANGE FOLDER DIRECTORY ON LINE 31 AND EXCEL FILE
 
 """
 
-globals().clear()
-
 from inomed.inoPatientData import *
 from inomed.readEDF import *
 
@@ -32,7 +30,7 @@ import seaborn as sns
 plt.close('all')
 
 # Specify the folder containing the EDF files
-folder = r'C:\Users\marti\OneDrive\Documents\UPC\Quart de carrera\8th Cuatrimestre\TFG\SJD\Data Recordings\PATIENT DATA\Patient 3\Channel 1-2'
+folder = r'C:\Users\msedo\Documents\CCEPs\SJD\Data Recordings\PATIENT DATA\Patient 3\Channel 1-2'
 
 # Get a list of all EDF files in the folder
 files = glob.glob(os.path.join(folder, '*.edf'))
@@ -233,24 +231,25 @@ for idx in range(len(f_signals)):
     # N2 amplitude
     n2_amp = max_value_section3 - min_value_section2
 
-    
     # Append the values to the data lists
     data['Signal'].append(idx + 1)
     data['P1_Latency'].append(t[max_idx_section4])
-    data['P1_Amplitude'].append(max_value_section4)
+    data['P1_Amplitude'].append(abs(max_value_section4))
     data['N1_Latency'].append(t[min_idx_section1])
-    data['N1 matsumoto'].append(n1_matsumoto)
+    data['N1 matsumoto'].append(abs(n1_matsumoto))
     data['P2_Latency'].append(t[max_idx_section3])
-    data['P2_Amplitude'].append(max_value_section3)
+    data['P2_Amplitude'].append(abs(max_value_section3))
     data['N2_Latency'].append(t[min_idx_section2])
-    data['N2_Amplitude'].append(n2_amp)
+    data['N2_Amplitude'].append(abs(n2_amp))
     
     
     plt.plot(t, f_signals[idx])
     
     # Plot the minimum values on the original signal with labels
-    plt.scatter([t[mask_section1][np.argmin(f_signals[idx][mask_section1])], t[mask_section2][np.argmin(f_signals[idx][mask_section2])]],
-                [min_value_section1, min_value_section2], color='red', zorder=2)
+    plt.scatter(t[mask_section1][np.argmin(f_signals[idx][mask_section1])], min_value_section1, color='red', zorder=2)
+    
+    # Plot the minimum values on the original signal with labels
+    plt.scatter(t[mask_section2][np.argmin(f_signals[idx][mask_section2])], min_value_section2, color='orange', zorder=2)
 
     # Plot the maximum value on the original signal with label
     plt.scatter(t[mask_section3][np.argmax(f_signals[idx][mask_section3])], max_value_section3, color='green', zorder=2)
@@ -304,9 +303,9 @@ std_deviation = np.std(f_signals, axis=0)
 
 # Create masks for the sections
 mask_section1 = (t >= 12) & (t <= 27)
-mask_section2 = (t >= 20) & (t <= 50)
-mask_section3 = (t >= 40) & (t <= 82)
-mask_section4 = (t >= 9) & (t <= 12)  # New mask section
+mask_section2 = (t >= 30) & (t <= 50)
+mask_section3 = (t >= 40) & (t <= 80)
+mask_section4 = (t >= 7) & (t <= 12)  # New mask section
 
 # Find minimum value in section 1
 min_value_section1 = np.min(mean_signal[mask_section1])
@@ -353,13 +352,13 @@ n2_amp_avg = max_value_section2 - min_value_section3
 # Append N1, P1, and N2 values to the data table
 data['Signal'].append('Averaged')
 data['N1_Latency'].append(t[min_idx_section1])
-data['N1 matsumoto'].append(n1_matsumoto_avg)
+data['N1 matsumoto'].append(abs(n1_matsumoto_avg))
 data['P1_Latency'].append(t[max_idx_section4])  # New P1
-data['P1_Amplitude'].append(max_value_section4)  # New P1
+data['P1_Amplitude'].append(abs(max_value_section4))  # New P1
 data['P2_Latency'].append(t[max_idx_section2])
-data['P2_Amplitude'].append(max_value_section2)
+data['P2_Amplitude'].append(abs(max_value_section2))
 data['N2_Latency'].append(t[min_idx_section3])
-data['N2_Amplitude'].append(n2_amp_avg)
+data['N2_Amplitude'].append(abs(n2_amp_avg))
 
 # Plot the mean signal with standard deviation
 plt.figure(figsize=(10, 6))
@@ -367,24 +366,74 @@ plt.plot(t, mean_signal, label='Averaged Signal')
 plt.fill_between(t, mean_signal - std_deviation, mean_signal + std_deviation, color='gray', alpha=0.2, label='Standard Deviation')
 
 # Plot the maximum and minimum values on the mean signal
-plt.scatter(t[max_idx_section4], max_value_section4, color='orange', label='P1')
-plt.scatter(t[min_idx_section1], min_value_section1, color='red', label='N1')
-plt.scatter(t[max_idx_section2], max_value_section2, color='green', label='P2')
-plt.scatter(t[min_idx_section3], min_value_section3, color='blue', label='N2')
+plt.scatter(t[max_idx_section4], max_value_section4, color='red', label='P1')
+plt.scatter(t[min_idx_section1], min_value_section1, color='green', label='N1')
+plt.scatter(t[max_idx_section2], max_value_section2, color='blue', label='P2')
+plt.scatter(t[min_idx_section3], min_value_section3, color='orange', label='N2')
 
 # Add text labels beneath the legend
-plt.text(80, 240, f'P1: lat.={t[max_idx_section4]:.2f} ms, amp.={max_value_section4:.2f} uV', ha='left')
-plt.text(80, 220, f'N1: lat.={t[min_idx_section1]:.2f} ms, amp.={n1_matsumoto_avg:.2f} uV', ha='left')
-plt.text(80, 200, f'P2: lat.={t[max_idx_section2]:.2f} ms, amp.={max_value_section2:.2f} uV', ha='left')
-plt.text(80, 180, f'N2: lat.={t[min_idx_section3]:.2f} ms, amp.={n2_amp_avg:.2f} uV', ha='left')
+plt.text(100, -180, f'P1: lat.={t[max_idx_section4]:.2f} ms, amp.={max_value_section4:.2f} uV', ha='left')
+plt.text(100, -160, f'N1: lat.={t[min_idx_section1]:.2f} ms, amp.={n1_matsumoto_avg:.2f} uV', ha='left')
+plt.text(100, -140, f'P2: lat.={t[max_idx_section2]:.2f} ms, amp.={max_value_section2:.2f} uV', ha='left')
+plt.text(100, -120, f'N2: lat.={t[min_idx_section3]:.2f} ms, amp.={n2_amp_avg:.2f} uV', ha='left')
+
+# ===================== Intersection lines plot =============================
+
+# ------------------------ Plotting P1-P2 intersection with N1 ----------------
+
+# --- P1-P2 segment as dashed line ---
+x_line = np.linspace(min(x1, x2), max(x1, x2), 200)
+y_line = m * x_line + c
+plt.plot(x_line, y_line, color='grey', linestyle='--', linewidth=2, label='P1-P2 line')
+
+# --- Intersection on the P1-P2 line (x3, y4) ---
+plt.scatter(x3, y4, color='grey', zorder=6)
+
+# --- Ensure N1 point is visible (re-plot if needed) ---
+plt.scatter(x3, y3, color='green', zorder=7)  # N1 already plotted earlier, this ensures it's on top
+
+# --- Vertical line between intersection and N1 ---
+ymin_v, ymax_v = min(y3, y4), max(y3, y4)
+plt.vlines(x3, ymin=ymin_v, ymax=ymax_v, color='grey', linestyle=':', linewidth=1.5, zorder=5)
+
+# --- Annotate the amplitude difference along the vertical line ---
+mid_y = (y3 + y4) / 2
+plt.text(x3 + 3, mid_y, f'{n1_matsumoto_avg:.2f} µV', va='center', fontsize=9, bbox=dict(facecolor='white', alpha=0.6, edgecolor='none'))
+
+# ---------------------------- N2 amplitude line --------------------------------
+
+# Horizontal line at P2 (min of section 3) from P2 time to the x position of section4 max
+x_start = t[max_idx_section2]
+x_end = t[min_idx_section3]
+y_h = max_value_section2
+
+# Draw the horizontal line (no legend entry)
+plt.hlines(y=y_h, xmin=x_start, xmax=x_end, colors='red', linestyles='--', linewidth=2, zorder=4)
+
+# Optional small vertical ticks at the ends to make endpoints clear
+plt.vlines([x_start, x_end], ymin=y_h - 2, ymax=y_h + 2, colors='red', linestyle=':', linewidth=1.5, zorder=5)
+
+# Annotate the N2 amplitude (n2_amp_avg) near the middle of the horizontal line
+x_mid = x_end + 1
+y_text = (y_h + max_value_section2) / 2
+plt.text(x_mid, y_text, f'{n2_amp_avg:.2f} µV', color='red',
+         fontsize=9, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.6, edgecolor='none'))
+
+# If you want a connecting vertical line from the horizontal end to the section4 max point:
+# this draws a vertical line at x_end from y_h up to the section4 max value (max_value_section4)
+plt.vlines(x_end, ymin=y_h, ymax=min_value_section3, colors='red', linestyles=':', linewidth=1, alpha=0.8, zorder=3)
+
 
 plt.xlabel('Time (ms)')
 plt.ylabel('Amplitude (µV)')
 plt.title('Averaged signal ± Standard deviation envelope')
 plt.legend()
 plt.xlim([0, 250])
-plt.ylim([-200, 300])
+plt.ylim([-250, 100])
 plt.grid(True)
+
+plt.gca().invert_yaxis()
+
 plt.show()
 
 
@@ -414,7 +463,7 @@ pd.set_option('display.max_columns', None)
 print(df)
 
 # Export DataFrame to Excel file
-#df.to_excel(r'C:\Users\marti\OneDrive\Documents\UPC\Quart de carrera\8th Cuatrimestre\TFG\SJD\Data Recordings\PATIENT DATA\Patient 2\Channel 1-2\P2CH1-2_nofilt.xlsx', index=True)
+df.to_excel(r'C:\Users\msedo\Documents\CCEPs\CCEP plots\P2CH1-2_new.xlsx', index=True)
 
 # --------------------------- Start - end analysis ----------------------------
 

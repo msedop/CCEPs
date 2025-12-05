@@ -188,9 +188,10 @@ for idx in range(len(f_signals)):
 
     # Create masks for the sections
     mask_section1 = (t >= 20) & (t <= 50)
-    mask_section2 = (t >= 70) & (t <= 100)
-    mask_section3 = (t >= 100) & (t <= 180)
+    mask_section2 = (t >= 100) & (t <= 180)
+    mask_section3 = (t >= 70) & (t <= 100)
     mask_section4 = (t >= 9) & (t <= 15)  # New mask section
+    
 
     # Extract the relevant sections
     section1 = f_signals[idx][mask_section1]
@@ -247,20 +248,22 @@ for idx in range(len(f_signals)):
     # Append the values to the data lists
     data['Signal'].append(idx + 1)
     data['P1_Latency'].append(t[max_idx_section4])
-    data['P1_Amplitude'].append(max_value_section4)
+    data['P1_Amplitude'].append(abs(max_value_section4))
     data['N1_Latency'].append(t[min_idx_section1])
-    data['N1 matsumoto'].append(n1_matsumoto)
+    data['N1 matsumoto'].append(abs(n1_matsumoto))
     data['P2_Latency'].append(t[max_idx_section3])
-    data['P2_Amplitude'].append(max_value_section3)
+    data['P2_Amplitude'].append(abs(max_value_section3))
     data['N2_Latency'].append(t[min_idx_section2])
-    data['N2_Amplitude'].append(n2_amp)
+    data['N2_Amplitude'].append(abs(n2_amp))
     
     
     plt.plot(t, f_signals[idx])
     
     # Plot the minimum values on the original signal with labels
-    plt.scatter([t[mask_section1][np.argmin(f_signals[idx][mask_section1])], t[mask_section2][np.argmin(f_signals[idx][mask_section2])]],
-                [min_value_section1, min_value_section2], color='red', zorder=2)
+    plt.scatter(t[mask_section1][np.argmin(f_signals[idx][mask_section1])], min_value_section1, color='red', zorder=2)
+    
+    # Plot the minimum values on the original signal with labels
+    plt.scatter(t[mask_section2][np.argmin(f_signals[idx][mask_section2])], min_value_section2, color='orange', zorder=2)
 
     # Plot the maximum value on the original signal with label
     plt.scatter(t[mask_section3][np.argmax(f_signals[idx][mask_section3])], max_value_section3, color='green', zorder=2)
@@ -367,13 +370,13 @@ n2_amp_avg = max_value_section2 - min_value_section3
 # Append N1, P1, and N2 values to the data table
 data['Signal'].append('Averaged')
 data['N1_Latency'].append(t[min_idx_section1])
-data['N1 matsumoto'].append(n1_matsumoto_avg)
+data['N1 matsumoto'].append(abs(n1_matsumoto_avg))
 data['P1_Latency'].append(t[max_idx_section4])  # New P1
-data['P1_Amplitude'].append(max_value_section4)  # New P1
+data['P1_Amplitude'].append(abs(max_value_section4))  # New P1
 data['P2_Latency'].append(t[max_idx_section2])
-data['P2_Amplitude'].append(max_value_section2)
+data['P2_Amplitude'].append(abs(max_value_section2))
 data['N2_Latency'].append(t[min_idx_section3])
-data['N2_Amplitude'].append(n2_amp_avg)
+data['N2_Amplitude'].append(abs(n2_amp_avg))
 
 # Plot the mean signal with standard deviation
 plt.figure(figsize=(10, 6))
@@ -478,7 +481,7 @@ pd.set_option('display.max_columns', None)
 print(df)
 
 # Export DataFrame to Excel file
-#df.to_excel(r'C:\Users\marti\OneDrive\Documents\UPC\Quart de carrera\8th Cuatrimestre\TFG\SJD\Data Recordings\PATIENT DATA\Patient 3 (surgery)\Channel 4-5\P3CH4-5_bandpass.xlsx', index=True)
+df.to_excel(r'C:\Users\msedo\Documents\CCEPs\CCEP plots\P3CH4-5_new.xlsx', index=True)
 
 
 # --------------------------- Start - end analysis ----------------------------

@@ -8,7 +8,6 @@ FOR EVERY PATIENT AND CHANNEL, CHANGE FOLDER DIRECTORY ON LINE 31 AND EXCEL FILE
 
 """
 
-globals().clear()
 
 from inomed.inoPatientData import *
 from inomed.readEDF import *
@@ -31,7 +30,7 @@ import seaborn as sns
 plt.close('all')
 
 # Specify the folder containing the EDF files
-folder = r'C:\Users\marti\OneDrive\Documents\UPC\Quart de carrera\8th Cuatrimestre\TFG\SJD\Data Recordings\PATIENT DATA\Patient 9\Channel 3-4'
+folder = r'C:\Users\msedo\Documents\CCEPs\SJD\Data Recordings\PATIENT DATA\Patient 9\Channel 3-4'
 
 # Get a list of all EDF files in the folder
 files = glob.glob(os.path.join(folder, '*.edf'))
