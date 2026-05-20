@@ -1,0 +1,114 @@
+Why is there an error if the masks are based on t which is createde using number of smaples?
+
+# Creación de subplots
+fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+
+for i in np.array(range(0, len(file_names))):
+    
+    # cargamos archivo EDF
+    ipd = readEDF(file=files[i])
+
+    # Guardamos metadatos
+    info = ipd[0]
+
+    # Lista de numpy.ndarray con datos
+    data = ipd[1]
+    
+    # Número de muestras en registro
+    num_samples = ipd[0]['nSamples'][0]
+    
+    # Duración registro (seg)
+    duration = ipd[0]['durationRecords']
+    
+    # Frecuencia de muestreo
+    fs = (num_samples/duration)
+    
+    # Periodo de muestreo
+    sample_range = range(num_samples)
+    sample_array = np.array(sample_range)
+    t = (sample_array / fs) * 1000 # Conversión a milisegundos 
+    
+    y = -data[0]*1000 # Conversión a uV
+    
+    orig_signals.append(y)
+
+    #----------------------- Filtramos señal  ---------------------------------
+    
+    # Frecuencias de corte para los filtros
+    low_cutoff = 10  # Frecuencia de corte pasa-altos en Hz
+    high_cutoff = 1500.0  # Frecuencia de corte pasa-bajos en Hz
+    
+    # Creamos un filtro Butterworth
+    order = 4  # Orden del filtro
+    b, a = signal.butter(order, [low_cutoff, high_cutoff], btype='band', fs=fs)
+    
+    # Aplicamos el filtro a la señal
+    filtered_y = signal.filtfilt(b, a, y)
+    
+    f_signals.append(y)
+    
+    
+    # ------------------------------- Plots ----------------------------------
+    
+    # Plot señal original
+    ax1.plot(t, y, label='Original Signal')
+    # Plot señal filtrada
+    ax2.plot(t, filtered_y, label='Filtered Signal')
+    
+
+
+ax1.set_ylabel("Amplitude [uV]")
+ax1.set_title('Original Signal')
+ax1.grid('minor')
+
+ax2.set_ylabel("Amplitude [uV]")
+ax2.set_xlabel("Time [ms]")
+ax2.set_title('Filtered Signal')
+ax2.grid('minor')
+
+# Ajustamos el layout para evitar solapamiento
+plt.tight_layout()
+
+# Añadimos cursores interactivos
+mplcursors.cursor(ax1.lines + ax2.lines, hover=True)
+
+plt.show()
+
+
+# =======================================================================================
+#            Feature extraction (latencia + amplitud) componentes P1, N1, P2, N2
+# =======================================================================================
+
+# Inicializamos listas para almacenar medidas de latencia y amplitud
+data = {
+    'Signal': [],
+    'P1_Latency': [], 'P1_Amplitude': [],
+    'N1_Latency': [], 'N1 matsumoto': [],
+    'P2_Latency': [], 'P2_Amplitude': [],
+    'N2_Latency': [], 'N2_Amplitude': []
+}
+
+# Definición de ventanas temporales de cada componente
+mask_section1 = (t >= 12) & (t <= 27)   # P1: 'Little bump', primer pico positivo
+mask_section2 = (t >= 20) & (t <= 50)  # N1: 'Matsumoto N1', primer pico negativo
+mask_section3 = (t >= 50) & (t <= 110)  # P2: segundo pico positivo
+mask_section4 = (t >= 100) & (t <= 200) # N2: segundo pico negativo
+
+I obtain this error:
+
+IndexError                                Traceback (most recent call last)
+File c:\users\msedo\documents\cceps\sjd\nex python toolkit 3.12\inomed_erp_reader.py:188
+    184 # Ploteamos todas las señales en la nueva figura
+    185 for idx in range(len(f_signals)):
+    186 
+    187     # Extraemos las ventanas de tiempo relevantes
+--> 188     section1 = f_signals[idx][mask_section1]
+    189     section2 = f_signals[idx][mask_section2]
+    190     section3 = f_signals[idx][mask_section3]
+
+IndexError: boolean index did not match indexed array along dimension 0; dimension is 4000 but corresponding boolean dimension is 10000
+
+print(len(f_signals[idx]))
+print(len(mask_section1))
+4000
+10000
