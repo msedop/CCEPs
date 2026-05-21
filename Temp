@@ -1,123 +1,15 @@
-from pathlib import Path
 import numpy as np
-import pandas as pd
 
+file_path = r"C:\Users\marti\OneDrive\Documents\HSJD\CCEPs\Saved selections\W1_Fz_first_100_signals.npz"
 
-def save_signal_selection(
-    signals,
-    measure_times,
-    sampling_rate,
-    channel_name,
-    selected_indices,
-    output_folder,
-    output_name="selected_signals",
-    save_csv=True,
-    save_npz=True,
-    one_based_indices=False
-):
-    """
-    Save a selected group of signals to your computer.
+loaded = np.load(file_path, allow_pickle=True)
 
-    Parameters
-    ----------
-    signals : np.ndarray
-        Shape: n_signals x n_samples
+signals = loaded["signals"]
+measure_times = loaded["measure_times"]
+sampling_rate = loaded["sampling_rate"].item()
+channel_name = loaded["channel_name"].item()
+time_ms = loaded["time_ms"]
 
-    measure_times : list
-        One measurement time per signal.
-
-    sampling_rate : float
-        Sampling rate in Hz.
-
-    channel_name : str
-        Example: W1-Fz
-
-    selected_indices : list, array, or np.ndarray
-        Indices of signals to save.
-
-    output_folder : str
-        Folder where files will be saved.
-
-    output_name : str
-        Base name of the saved files.
-
-    save_csv : bool
-        If True, saves a CSV file.
-
-    save_npz : bool
-        If True, saves a compressed NumPy file.
-
-    one_based_indices : bool
-        If True, selected_indices are interpreted as file-style numbers:
-        1, 2, 3, ...
-        If False, selected_indices are Python-style:
-        0, 1, 2, ...
-    """
-
-    signals = np.asarray(signals)
-    selected_indices = np.asarray(selected_indices)
-
-    if one_based_indices:
-        selected_indices = selected_indices - 1
-
-    output_folder = Path(output_folder)
-    output_folder.mkdir(parents=True, exist_ok=True)
-
-    selected_signals = signals[selected_indices, :]
-    selected_times = [measure_times[i] for i in selected_indices]
-
-    n_selected, n_samples = selected_signals.shape
-    time_ms = np.arange(n_samples) / sampling_rate * 1000
-
-    saved_files = []
-
-    if save_npz:
-        npz_path = output_folder / f"{output_name}.npz"
-
-        np.savez_compressed(
-            npz_path,
-            signals=selected_signals,
-            selected_indices=selected_indices,
-            selected_signal_numbers=selected_indices + 1,
-            measure_times=np.array(selected_times, dtype=object),
-            sampling_rate=sampling_rate,
-            channel_name=channel_name,
-            time_ms=time_ms
-        )
-
-        saved_files.append(npz_path)
-
-    if save_csv:
-        csv_path = output_folder / f"{output_name}.csv"
-
-        df = pd.DataFrame()
-        df["time_ms"] = time_ms
-
-        for k, signal_idx in enumerate(selected_indices):
-            signal_number = signal_idx + 1
-            measure_time = measure_times[signal_idx]
-            column_name = f"signal_{signal_number}_{measure_time}"
-            df[column_name] = selected_signals[k, :]
-
-        df.to_csv(csv_path, index=False)
-
-        saved_files.append(csv_path)
-
-    print("Saved files:")
-    for file in saved_files:
-        print(file)
-
-    return selected_signals, selected_times, saved_files
-
-
-
-selected_signals, selected_times, saved_files = save_signal_selection(
-    signals=signals,
-    measure_times=measure_times,
-    sampling_rate=sr,
-    channel_name=channel_name,
-    selected_indices=np.arange(101, 151),  # file-style numbering
-    output_folder=r"C:\Users\marti\OneDrive\Documents\HSJD\CCEPs\Saved selections",
-    output_name="W1_Fz_signals_101_to_150",
-    one_based_indices=True
-)
+print(signals.shape)
+print(sampling_rate)
+print(channel_name)
