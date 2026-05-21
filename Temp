@@ -1,46 +1,18 @@
 import numpy as np
 
-file_path = r"C:\Users\marti\OneDrive\Documents\HSJD\CCEPs\Saved selections\W1_Fz_first_100_signals.npz"
-
-loaded = np.load(file_path, allow_pickle=True)
-
-signals = loaded["signals"]
-measure_times = loaded["measure_times"]
-sampling_rate = loaded["sampling_rate"].item()
-channel_name = loaded["channel_name"].item()
-time_ms = loaded["time_ms"]
-
-print(signals.shape)
-print(sampling_rate)
-print(channel_name)
-
-
-
 file_path = r"C:\Users\msedo\Documents\CCEPs\Saved selections\W1_Fz_signals_91_to_110.npz"
 
 loaded = np.load(file_path, allow_pickle=True)
 
-signals = loaded["signals"]
+signals_array = loaded["signals"]
 measure_times = loaded["measure_times"]
 sampling_rate = loaded["sampling_rate"].item()
 channel_name = loaded["channel_name"].item()
 time_ms = loaded["time_ms"]
 
-print(signals.shape)
-print(sampling_rate)
-print(channel_name)
+signals_list = [signals_array[i, :].copy() for i in range(signals_array.shape[0])]
 
-(4, 4000)
-20000
-W1-Fz
-
-signals
-Out[28]: 
-array([[-2.46496e+00, -1.52411e+00, -7.57410e-01, ..., -8.20000e-04,
-        -6.30000e-04, -5.90000e-04],
-       [-2.73972e+00, -2.12346e+00, -1.37412e+00, ..., -1.32800e-02,
-        -1.39600e-02, -1.44100e-02],
-       [-1.79264e+00, -7.39070e-01, -1.12590e-01, ...,  7.11400e-02,
-         7.23800e-02,  7.33900e-02],
-       [-2.84586e+00, -1.62479e+00, -5.27720e-01, ..., -5.22700e-02,
-        -5.36300e-02, -5.48700e-02]])
+print(type(signals_list))
+print(len(signals_list))
+print(type(signals_list[0]))
+print(signals_list[0].shape)
