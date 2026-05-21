@@ -1,18 +1,47 @@
 import numpy as np
+import pandas as pd
+import re
 
-file_path = r"C:\Users\msedo\Documents\CCEPs\Saved selections\W1_Fz_signals_91_to_110.npz"
+file_path = r"C:\Users\msedo\Documents\CCEPs\Saved selections\W1_Fz_signals_91_to_110.csv"
 
-loaded = np.load(file_path, allow_pickle=True)
+df = pd.read_csv(file_path)
 
-signals_array = loaded["signals"]
-measure_times = loaded["measure_times"]
-sampling_rate = loaded["sampling_rate"].item()
-channel_name = loaded["channel_name"].item()
-time_ms = loaded["time_ms"]
+time_ms = df["time_ms"].to_numpy()
 
-signals_list = [signals_array[i, :].copy() for i in range(signals_array.shape[0])]
+signal_columns = [col for col in df.columns if col.startswith("signal_")]
 
-print(type(signals_list))
-print(len(signals_list))
-print(type(signals_list[0]))
-print(signals_list[0].shape)
+signals = df[signal_columns].to_numpy().T
+
+signals_list = [signals[i, :].copy() for i in range(signals.shape[0])]
+
+signal_numbers = []
+measure_times = []
+
+for col in signal_columns:
+    match = re.match(r"signal_(\d+)_(.+)", col)
+    signal_numbers.append(int(match.group(1)))
+    measure_times.append(match.group(2))
+
+sampling_rate = 20000
+channel_name = "W1-Fz"
+
+print("Signals array shape:", signals.shape)
+print("Number of signals in list:", len(signals_list))
+print("Each signal shape:", signals_list[0].shape)
+print("Signal numbers:", signal_numbers)
+print("Measure times:", measure_times)
+
+
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(14, 6))
+
+for signal in signals_list:
+    plt.plot(time_ms, signal, alpha=0.4, linewidth=0.8)
+
+plt.xlabel("Time (ms)")
+plt.ylabel("Amplitude (μV)")
+plt.title(f"{channel_name}: loaded signals {signal_numbers[0]} to {signal_numbers[-1]}")
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
