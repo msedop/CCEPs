@@ -1,62 +1,154 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 
-def add_signal_offsets(signals, offset_step=0.05, center_offsets=True):
+def plot_group_mean_std_envelopes(
+    signals,
+    sampling_rate,
+    group_size=10,
+    channel_name="W1-Fz",
+    start_signal=0,
+    end_signal=None,
+    baseline_correct=True,
+    baseline_window_ms=None,
+    include_incomplete_group=True,
+    separate_figures=True,
+    alpha_envelope=0.25,
+    linewidth_mean=2.0
+):
     """
-    Add a small vertical offset to each signal.
+    Plot average and standard deviation envelope for groups of signals.
 
     Parameters
     ----------
     signals : np.ndarray
-        Array with shape: n_signals x n_samples
+        Shape: n_signals x n_samples
 
-    offset_step : float
-        Vertical distance between consecutive signals, in the same units
-        as the signal amplitude, usually μV.
+    sampling_rate : float
+        Sampling rate in Hz.
 
-    center_offsets : bool
-        If True, offsets are centered around zero.
-        If False, offsets start at zero and increase upward.
+    group_size : int
+        Number of signals per group. Default is 10.
 
-    Returns
-    -------
-    offset_signals : np.ndarray
-        Signals with vertical offsets added.
+    start_signal : int
+        First signal index to use, Python-style.
+        0 means signal 1.
 
-    offsets : np.ndarray
-        Offset value added to each signal.
+    end_signal : int or None
+        Last signal index, Python-style and exclusive.
+        None means use all signals.
+
+    baseline_correct : bool
+        If True, subtracts baseline from each signal before averaging.
+
+    baseline_window_ms : tuple or None
+        Example: (0, 5) subtracts the mean from 0 to 5 ms.
+        If None, subtracts the full-signal mean from each signal.
+
+    include_incomplete_group : bool
+        If True, includes the final group even if it has fewer than group_size signals.
+
+    separate_figures : bool
+        If True, each group is plotted in a different figure.
+        If False, all group averages are plotted on the same figure.
     """
 
     signals = np.asarray(signals, dtype=float)
 
-    n_signals = signals.shape[0]
+    if end_signal is None:
+        end_signal = signals.shape[0]
 
-    if center_offsets:
-        offsets = (np.arange(n_signals) - (n_signals - 1) / 2) * offset_step
-    else:
-        offsets = np.arange(n_signals) * offset_step
+    selected_signals = signals[start_signal:end_signal, :].copy()
 
-    offset_signals = signals + offsets[:, np.newaxis]
+    n_signals, n_samples = selected_signals.shape
+    time_ms = np.arange(n_samples) / sampling_rate * 1000
 
-    return offset_signals, offsets
+    # Baseline correction
+    if baseline_correct:
+        if baseline_window_ms is None:
+            baseline = np.mean(selected_signals, axis=1, keepdims=True)
+        else:
+            b_start_ms, b_end_ms = baseline_window_ms
+            b_start = int(b_start_ms * sampling_rate / 1000)
+            b_end = int(b_end_ms * sampling_rate / 1000)
 
+            if b_end <= b_start:
+                raise ValueError("baseline_window_ms must be something like (0, 5).")
 
+            baseline = np.mean(selected_signals[:, b_start:b_end], axis=1, keepdims=True)
 
+        selected_signals = selected_signals - baseline
 
-first_100 = signals[:100, :]
+    # Create group start indices
+    group_starts = list(range(0, n_signals, group_size))
 
-first_100_offset, offsets = add_signal_offsets(
-    first_100,
-    offset_step=0.03,
-    center_offsets=True
-)
+    if not include_incomplete_group:
+        group_starts = [
+            g for g in group_starts
+            if g + group_size <= n_signals
+        ]
 
-plot_overlapping_signals(
-    first_100_offset,
+    if not separate_figures:
+        plt.figure(figsize=(14, 6))
+
+    for group_number, group_start in enumerate(group_starts, start=1):
+        group_end = min(group_start + group_size, n_signals)
+
+        group = selected_signals[group_start:group_end, :]
+
+        mean_signal = np.mean(group, axis=0)
+        std_signal = np.std(group, axis=0)
+
+        real_start_signal = start_signal + group_start + 1
+        real_end_signal = start_signal + group_end
+
+        if separate_figures:
+            plt.figure(figsize=(14, 6))
+
+        plt.plot(
+            time_ms,
+            mean_signal,
+            linewidth=linewidth_mean,
+            label=f"Mean signals {real_start_signal}-{real_end_signal}"
+        )
+
+        plt.fill_between(
+            time_ms,
+            mean_signal - std_signal,
+            mean_signal + std_signal,
+            alpha=alpha_envelope,
+            label="±1 SD"
+        )
+
+        if separate_figures:
+            plt.xlabel("Time (ms)")
+            plt.ylabel("Amplitude (μV)")
+            plt.title(
+                f"{channel_name}: Mean ± SD, signals {real_start_signal}-{real_end_signal}"
+            )
+            plt.grid(True, alpha=0.3)
+            plt.legend()
+            plt.tight_layout()
+            plt.show()
+
+    if not separate_figures:
+        plt.xlabel("Time (ms)")
+        plt.ylabel("Amplitude (μV)")
+        plt.title(f"{channel_name}: Group mean ± SD envelopes")
+        plt.grid(True, alpha=0.3)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+plot_group_mean_std_envelopes(
+    signals,
     sampling_rate=sr,
+    group_size=10,
     channel_name=channel_name,
-    title_suffix="first 100 signals with small offset",
-    alpha=0.5,
-    linewidth=0.8,
-    baseline_correct=False
+    start_signal=0,
+    end_signal=100,
+    baseline_correct=True,
+    baseline_window_ms=None,
+    separate_figures=True
 )
+
