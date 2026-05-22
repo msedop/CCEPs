@@ -8,6 +8,9 @@ FOR EVERY PATIENT AND CHANNEL, CHANGE FOLDER DIRECTORY ON LINE 31 AND EXCEL FILE
 
 """
 
+import sys
+sys.path.append(r"C:\Users\msedo\Documents\CCEPs\SJD\Nex Python Toolkit 3.12")
+
 from inomed.inoPatientData import *
 from inomed.readEDF import *
 
@@ -53,7 +56,7 @@ def parse_inomed_metadata(meta_list):
 plt.close('all')
 
 # Directorio de carpeta que contiene los archivos EDF a analizar
-folder = r'C:\Users\msedo\Documents\CCEPs\SJD\Data Recordings\PATIENT DATA\Patient 4 (surgery)\Channel 5-6 inv'
+folder = r'C:\Users\msedo\Documents\CCEPs\NEW patient data\Genis Gelador - 1981833 (MAQ 4)\W3-REF'
 
 # Lista de todos los archivos EDF presentes en la carpeta
 files = glob.glob(os.path.join(folder, '*.edf'))
@@ -73,13 +76,65 @@ pprint(meta)
 
 
 # =======================================================================================
+#                           Importación CCEPs máquina 2
+# =======================================================================================
+
+# file_path = r"C:\Users\msedo\Documents\CCEPs\Saved selections\Hector\6_7_signals_10_to_30.csv"
+
+# df = pd.read_csv(file_path)
+
+# time_ms = df["time_ms"].to_numpy()
+
+# signal_columns = [col for col in df.columns if col.startswith("signal_")]
+
+# signals = df[signal_columns].to_numpy().T
+
+# signals_list = [signals[i, :].copy()*1000 for i in range(signals.shape[0])]
+
+# signal_numbers = []
+# measure_times = []
+
+# for col in signal_columns:
+#     match = re.match(r"signal_(\d+)_(.+)", col)
+#     signal_numbers.append(int(match.group(1)))
+#     measure_times.append(match.group(2))
+
+# sampling_rate = 20000
+# channel_name = "W3-Fz"
+
+# print("Signals array shape:", signals.shape)
+# print("Number of signals in list:", len(signals_list))
+# print("Each signal shape:", signals_list[0].shape)
+# print("Signal numbers:", signal_numbers)
+# print("Measure times:", measure_times)
+
+
+# f_signals = signals_list
+# t_signals = time_ms
+
+
+
+# plt.figure(figsize=(14, 6))
+
+# for signal in signals_list:
+#     plt.plot(time_ms, signal, alpha=0.4, linewidth=0.8)
+
+# plt.xlabel("Time (ms)")
+# plt.ylabel("Amplitude (μV)")
+# plt.title(f"{channel_name}: loaded signals {signal_numbers[0]} to {signal_numbers[-1]}")
+# plt.grid(True, alpha=0.3)
+# plt.tight_layout()
+# plt.show()
+
+
+# =======================================================================================
 #                               Visualización de señales
 # =======================================================================================
 
 # Inicializamos listas vacias para almacenar las señales
 orig_signals = []
 f_signals = []
-
+t_signals = []
 
 # Creación de subplots
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
@@ -126,8 +181,8 @@ for i in np.array(range(0, len(file_names))):
     # Aplicamos el filtro a la señal
     filtered_y = signal.filtfilt(b, a, y)
     
-    f_signals.append(filtered_y)
-    
+    f_signals.append(y)
+    t_signals.append(t)
     
     # ------------------------------- Plots ----------------------------------
     
@@ -169,11 +224,6 @@ data = {
     'N2_Latency': [], 'N2_Amplitude': []
 }
 
-# Definición de ventanas temporales de cada componente
-mask_section1 = (t >= 12) & (t <= 27)   # P1: 'Little bump', primer pico positivo
-mask_section2 = (t >= 20) & (t <= 50)  # N1: 'Matsumoto N1', primer pico negativo
-mask_section3 = (t >= 50) & (t <= 80)  # P2: segundo pico positivo
-mask_section4 = (t >= 100) & (t <= 120) # N2: segundo pico negativo
 
 # Plot señales
 plt.figure(figsize=(10, 6))
@@ -181,6 +231,14 @@ plt.figure(figsize=(10, 6))
 # Ploteamos todas las señales en la nueva figura
 for idx in range(len(f_signals)):
 
+    t = t_signals[idx]
+    
+    # Definición de ventanas temporales de cada componente
+    mask_section1 = (t >= 10) & (t <= 15)   # P1: 'Little bump', primer pico positivo
+    mask_section2 = (t >= 20) & (t <= 50)  # N1: 'Matsumoto N1', primer pico negativo
+    mask_section3 = (t >= 50) & (t <= 100)  # P2: segundo pico positivo
+    mask_section4 = (t >= 100) & (t <= 200) # N2: segundo pico negativo
+    
     # Extraemos las ventanas de tiempo relevantes
     section1 = f_signals[idx][mask_section1]
     section2 = f_signals[idx][mask_section2]
@@ -295,9 +353,27 @@ std_data = {
 # =======================================================================================
 # ------------ Averaged signal with standard deviation envelope ---------------
 
+# ---------------------------------------------------------------
+#            ONLY FOR PATIENT 19 WITH DIFF SIGNAL LENGTHS
+# ---------------------------------------------------------------
+
+# sig_4000 = [-sig[:4000] for sig in f_signals]
+# f_signals = sig_4000
+# t_4000 = [t[:4000] for t in t_signals]
+# t = t_4000[0]
+
+# # Definición de ventanas temporales de cada componente
+# mask_section1 = (t >= 12) & (t <= 27)   # P1: 'Little bump', primer pico positivo
+# mask_section2 = (t >= 20) & (t <= 50)  # N1: 'Matsumoto N1', primer pico negativo
+# mask_section3 = (t >= 50) & (t <= 110)  # P2: segundo pico positivo
+# mask_section4 = (t >= 100) & (t <= 200) # N2: segundo pico negativo
+
+# ------------------- !!!!!!!!!!!!!!!!!!!!!!  -------------------
+
 # Calculate the mean signal and standard deviation
 mean_signal = np.mean(f_signals, axis=0)
 std_deviation = np.std(f_signals, axis=0)
+N = len(f_signals)
 
 # Extraemos las ventanas de tiempo relevantes
 section1 = mean_signal[mask_section1]
@@ -370,10 +446,10 @@ plt.scatter(t[max_idx_section3], max_value_section3, color='blue', label='P2')
 plt.scatter(t[min_idx_section4], min_value_section4, color='orange', label='N2')
 
 # Add text labels beneath the legend
-plt.text(75, -250, f'P1: lat.={t[max_idx_section1]:.2f} ms, amp.={max_value_section1:.2f} uV', ha='left')
-plt.text(75, -210, f'N1: lat.={t[min_idx_section2]:.2f} ms, amp.={n1_matsumoto_avg:.2f} uV', ha='left')
-plt.text(75, -170, f'P2: lat.={t[max_idx_section3]:.2f} ms, amp.={max_value_section3:.2f} uV', ha='left')
-plt.text(75, -130, f'N2: lat.={t[min_idx_section4]:.2f} ms, amp.={n2_amp_avg:.2f} uV', ha='left')
+plt.text(75, 40, f'P1: lat.={t[max_idx_section1]:.2f} ms, amp.={max_value_section1:.2f} uV', ha='left')
+plt.text(75, 50, f'N1: lat.={t[min_idx_section2]:.2f} ms, amp.={n1_matsumoto_avg:.2f} uV', ha='left')
+plt.text(75, 60, f'P2: lat.={t[max_idx_section3]:.2f} ms, amp.={max_value_section3:.2f} uV', ha='left')
+plt.text(75, 70, f'N2: lat.={t[min_idx_section4]:.2f} ms, amp.={n2_amp_avg:.2f} uV', ha='left')
 
 
 # ===================== Intersection lines plot =============================
@@ -425,10 +501,10 @@ plt.vlines(x_end, ymin=y_h, ymax=min_value_section4, colors='red', linestyles=':
 
 plt.xlabel('Time (ms)')
 plt.ylabel('Amplitude (µV)')
-plt.title('Averaged signal ± Standard deviation envelope')
+plt.title(f'Averaged signal ± Standard deviation envelope (N= {N})')
 plt.legend()
 plt.xlim([0, 250])
-plt.ylim([-300, 200])
+plt.ylim([-50, 100])
 plt.grid(True)
 
 plt.gca().invert_yaxis()
@@ -438,33 +514,36 @@ plt.show()
 # #                            Dataframe with extracted parameters
 # # =======================================================================================
 
-# # Append mean data to the dataframe
-# df = pd.DataFrame(data)
+# Append mean data to the dataframe
+df = pd.DataFrame(data)
 
-# # Create a DataFrame for the mean data
-# mean_df = pd.DataFrame(mean_data)
+# Create a DataFrame for the mean data
+mean_df = pd.DataFrame(mean_data)
 
-# # Create a DataFrame for the mean data
-# std_df = pd.DataFrame(std_data)
+# Create a DataFrame for the mean data
+std_df = pd.DataFrame(std_data)
 
-# # Concatenate mean_df with df
-# df = pd.concat([df, mean_df], ignore_index=True)
+# Concatenate mean_df with df
+df = pd.concat([df, mean_df], ignore_index=True)
 
-# # Concatenate std_df with df
-# df = pd.concat([df, std_df], ignore_index=True)
+# Concatenate std_df with df
+df = pd.concat([df, std_df], ignore_index=True)
 
-# # Set pandas display options to show the full DataFrame
-# pd.set_option('display.max_rows', None)
-# pd.set_option('display.max_columns', None)
+# Set pandas display options to show the full DataFrame
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
 
-# # Display the DataFrame
-# print(df)
+# Display the DataFrame
+print(df)
 
-# # Export DataFrame to Excel file
-# #df.to_excel(r'C:\Users\marti\OneDrive\Documents\UPC\Quart de carrera\8th Cuatrimestre\TFG\SJD\Data Recordings\PATIENT DATA\Patient 3 (surgery)\Channel 5-6 inv\P3CH5-6inv_nofilt.xlsx', index=True)
+# Export DataFrame to Excel file
+df.to_excel(r'C:\Users\msedo\Documents\CCEPs\CCEP plots\P17CHW3-REF.xlsx', index=True)
 
 
-# # --------------------------- Start - end analysis ----------------------------
+# # # --------------------------- Start - end analysis ----------------------------
+
+# earliest_index = 0
+# latest_index = len(f_signals)-1
 
 # # Plot the mean signal with standard deviation
 # plt.figure(figsize=(10, 6))
